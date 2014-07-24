@@ -121,15 +121,26 @@ router.get('/sample/', function(req, res){
  HTML/CSS edition with ETag.
 */
 router.get('/edition/', function(req, res){
-  // Extract configuration provided by user through BERG Cloud.
-  // These options are defined in meta.json.
-  var language = req.query.lang;
-  var name = req.query.name;
+  // Local vars
+  var language, name, date;
 
   // Accept the test flag and populate with sample data
-  if(req.query.test == true){
+  if(req.query.test == 'true'){
     language = 'english';
-    name = 'Little Printer Validator'
+    name = 'Little Printer Validator';
+    date = moment();
+    date.day(1);
+  }
+  else{
+    // Extract configuration provided by user through BERG Cloud.
+    // These options are defined in meta.json.
+    language = req.query.lang;
+    name = req.query.name;
+
+    if(req.query.local_delivery_time != undefined){
+      // local_delivery_time is like '2013-11-18T23:20:30-08:00'.
+      date = moment(req.query.local_delivery_time)
+    }
   }
 
   if((language == undefined) || (settings.greetings[language] == undefined)){
@@ -140,13 +151,10 @@ router.get('/edition/', function(req, res){
     res.status(404);
     res.render('error', { message: 'Error: No name provided'});
   }
-  if(req.query.local_delivery_time == undefined){
+  if(date == undefined){
     res.status(404);
     res.render('error', { message: 'Error: Invalid or missing local_delivery_time'});
   }
-
-  // local_delivery_time is like '2013-11-18T23:20:30-08:00'.
-  var date = moment(req.query.local_delivery_time)
 
   // The publication is only delivered on Mondays, so if it's not a Monday in
   // the subscriber's timezone, we return nothing but a 204 status.
