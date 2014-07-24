@@ -126,6 +126,12 @@ router.get('/edition/', function(req, res){
   var language = req.query.lang;
   var name = req.query.name;
 
+  // Accept the test flag and populate with sample data
+  if(req.query.test == true){
+    language = 'english';
+    name = 'Little Printer Validator'
+  }
+
   if((language == undefined) || (settings.greetings[language] == undefined)){
     res.status(404);
     res.render('error', { message: 'Error: Invalid or missing lang parameter'});
