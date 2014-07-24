@@ -26,9 +26,9 @@ router.get('/', function(req, res) {
 /*
  == POST parameters:
  :config
-   params[:config] contains a JSON array of responses to the options defined
+   req.query.config contains a JSON array of responses to the options defined
    by the fields object in meta.json. In this case, something like:
-   params[:config] = ["name":"SomeName", "lang":"SomeLanguage"]
+   req.query.config = ["name":"SomeName", "lang":"SomeLanguage"]
 
  == Returns:
  A JSON response object.
@@ -36,16 +36,45 @@ router.get('/', function(req, res) {
  If the parameters passed in are not valid: {"valid":false,"errors":["No name was provided"], ["The language you chose does not exist"]}
 */
 router.post('/validate_config/', function(req, res){
-  if(req.query.config == undefined)
+  if(req.body.config == undefined)
   {
     res.status(400);
     res.render('error', { message: 'There is no config to validate.'});
   }
 
+  // Preparing what will be returned
   var response = {
     errors: [],
     valid: true
   }
+
+  /*
+   Extract the config from the POST data and parse its JSON contents.
+   user_settings will be something like: {"name":"Alice", "lang":"english"}.
+  */
+  var user_settings = req.body.config;
+
+  // If the user did not choose a language:
+  if(user_settings.lang == undefined){
+    response.valid = false;
+    response.errors.push('Please choose a language from the menu.');
+  }
+
+  // If the user did not fill in the name option:
+  if(user_settings.name == undefined){
+    response.valid = false;
+    response.errors.push('Please enter your name into the name box.');
+  }
+
+  if(settings.greetings[user_settings.lang] == undefined){
+    /*
+     Given that the select field is populated from a list of languages
+     we defined this should never happen. Just in case.
+    */
+    response.valid = false;
+    response.errors.push("We couldn't find the language you selected ("+user_settings.lang+"). Please choose another.");
+  }
+  res.json(response);
 })
 
 /*
@@ -94,7 +123,7 @@ router.get('/sample/', function(req, res){
 router.get('/edition/', function(req, res){
   // Extract configuration provided by user through BERG Cloud.
   // These options are defined in meta.json.
-  var language = req.query.language;
+  var language = req.query.lang;
   var name = req.query.name;
 
   if((language == undefined) || (settings.greetings[language] == undefined)){
