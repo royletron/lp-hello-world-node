@@ -1,5 +1,6 @@
 var express = require('express');
 var moment = require('moment');
+var md5 = require('md5');
 var router = express.Router();
 
 /* Define greetings for different times of the day in different languages. */
@@ -61,7 +62,16 @@ router.get('/sample/', function(req, res){
   var language = 'english';
   var name = 'Little Printer';
 
+  /*
+   Base the ETag on the unique content: language, name and time/date.
+   This means the user will not get the same content twice.
+   But, if they reset their subscription (with, say, a different language)
+   they will get new content.
+  */
+  res.set('ETag', md5.digest_s(language + name + moment().format()));
+
   var greeting = settings.greetings[language][0]+", "+name;
+
   res.render('edition', {greeting: greeting})
 })
 
@@ -122,7 +132,16 @@ router.get('/edition/', function(req, res){
     i = 2;
   }
 
+  /*
+   Base the ETag on the unique content: language, name and time/date.
+   This means the user will not get the same content twice.
+   But, if they reset their subscription (with, say, a different language)
+   they will get new content.
+  */
+  res.set('ETag', md5.digest_s(language + name + date.format()));
+
   var greeting = settings.greetings[language][i]+", "+name;
+
   res.render('edition', {greeting: greeting})
 })
 
